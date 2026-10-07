@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
+import rateLimit from 'express-rate-limit';
 import {
   getDb,
   nowIso,
@@ -29,6 +30,14 @@ import { getOnlineMeetingLink } from '../config/practice.js';
 
 const router = Router();
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Muitas tentativas. Tente novamente em alguns minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const VALID_STATUSES = new Set(['pending', 'confirmed', 'cancelled', 'completed', 'rescheduled']);
 
 function actorFrom(req) {
@@ -43,7 +52,7 @@ function conflictPayload(date, startTime, message = 'Horário já ocupado') {
   return { error: message, code: 'SLOT_TAKEN', ...(suggestions.length ? { suggestions } : {}) };
 }
 
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Usuário e senha obrigatórios' });

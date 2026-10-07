@@ -65,6 +65,21 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -40px;
+  z-index: 200;
+  padding: 8px 14px;
+  background: var(--purple-dark);
+  color: var(--white);
+  border-radius: 8px;
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
 img {
   max-width: 100%;
   height: auto;

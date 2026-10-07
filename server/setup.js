@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getDb } from './db.js';
+import { getAdminCredentials } from './secrets.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, '..', 'data');
@@ -14,8 +15,7 @@ if (!fs.existsSync(dataDir)) {
 
 const db = getDb();
 
-const username = process.env.ADMIN_USERNAME || 'admin';
-const password = process.env.ADMIN_PASSWORD || 'AltereSenhaForte123!';
+const { username, password } = getAdminCredentials();
 const hash = bcrypt.hashSync(password, 12);
 
 const existing = db.prepare('SELECT id FROM admin_users WHERE username = ?').get(username);

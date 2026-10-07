@@ -74,12 +74,26 @@ npm start
 
 ## Deploy
 
-Este projeto requer **Node.js** em servidor (Railway, Render, VPS, etc.). GitHub Pages **não** suporta o backend.
+Requer **Node.js 22.5+** (usa `node:sqlite`). GitHub Pages **não** serve — precisa de servidor com disco persistente em `data/`.
+
+Antes de publicar:
+
+1. `NODE_ENV=production`
+2. `JWT_SECRET` com 32+ caracteres (não o placeholder do `.env.example`)
+3. `ADMIN_USERNAME` e `ADMIN_PASSWORD` reais
+4. SMTP preenchido (`SMTP_*`, `NOTIFY_EMAIL`)
+5. `SITE_URL` com HTTPS
+6. Volume/disco montado em `data/` (senão a agenda some no restart)
 
 ```bash
-npm start
-# ou com PM2: pm2 start server/index.js --name renata-site
+npm run setup
+npm run start:prod
+# ou PM2: pm2 start server/index.js --name renata-site
 ```
+
+Há `Dockerfile`, `Procfile` e `render.yaml` (Render com disco em `data/`). Health check: `GET /healthz`.
+
+Backup local: `npm run backup` (copia `data/agenda.db` para `data/backups/`).
 
 ## GitHub
 

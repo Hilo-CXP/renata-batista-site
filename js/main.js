@@ -28,28 +28,57 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  contactForm.addEventListener('submit', (e) => {
+  fetch('/api/public/practice')
+    .then((res) => (res.ok ? res.json() : null))
+    .then((practice) => {
+      if (!practice) return;
+      const emailLink = document.getElementById('practiceEmail');
+      if (emailLink && practice.email) {
+        emailLink.href = `mailto:${practice.email}`;
+        emailLink.textContent = practice.email;
+      }
+      const hoursEl = document.getElementById('practiceHours');
+      if (hoursEl && practice.hours) hoursEl.textContent = practice.hours;
+    })
+    .catch(() => {});
+
+  contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     formFeedback.className = 'form-feedback';
 
     const nome = contactForm.nome.value.trim();
     const email = contactForm.email.value.trim();
+    const whatsapp = contactForm.whatsapp.value.trim();
     const mensagem = contactForm.mensagem.value.trim();
 
-    if (!nome || !email || !mensagem) {
+    if (!nome || !email || !whatsapp || !mensagem) {
       formFeedback.textContent = 'Por favor, preencha todos os campos obrigatórios.';
       formFeedback.classList.add('error');
       return;
     }
 
-    formFeedback.textContent = 'Mensagem enviada com sucesso! Retorno em até 24 horas.';
-    formFeedback.classList.add('success');
-    contactForm.reset();
+    const submitBtn = contactForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
 
-    setTimeout(() => {
-      formFeedback.textContent = '';
-      formFeedback.className = 'form-feedback';
-    }, 5000);
+    try {
+      const res = await fetch('/api/public/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, whatsapp, mensagem }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Não foi possível enviar a mensagem.');
+      }
+      formFeedback.textContent = data.message || 'Mensagem enviada. Retorno em até 24 horas.';
+      formFeedback.classList.add('success');
+      contactForm.reset();
+    } catch (err) {
+      formFeedback.textContent = err.message || 'Não foi possível enviar agora. Fale pelo WhatsApp.';
+      formFeedback.classList.add('error');
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
 
   /* Google reviews carousel */

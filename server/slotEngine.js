@@ -189,6 +189,10 @@ export function bookAppointment(data) {
     throw Object.assign(new Error('INVALID_ATTENDANCE'), { code: 'INVALID_ATTENDANCE' });
   }
 
+  if (attendance === 'online' && !getOnlineMeetingLink() && !(meeting_link && String(meeting_link).trim())) {
+    throw Object.assign(new Error('ONLINE_UNAVAILABLE'), { code: 'ONLINE_UNAVAILABLE' });
+  }
+
   if (!isValidEmail(patient_email)) {
     throw Object.assign(new Error('INVALID_EMAIL'), { code: 'INVALID_EMAIL' });
   }

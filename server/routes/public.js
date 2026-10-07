@@ -8,6 +8,9 @@ import {
   sendClientConfirmations,
 } from '../notifications.js';
 import { appointmentChanged } from '../events.js';
+import { sendEmail } from '../services/emailService.js';
+import { PRACTICE, getPublicPractice, getOnlineMeetingLink } from '../config/practice.js';
+import { isValidEmail, isValidPhone } from '../utils.js';
 
 const router = Router();
 
@@ -18,18 +21,19 @@ const bookingLimiter = rateLimit({
 });
 
 function clientIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.trim()) {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.socket?.remoteAddress || null;
+  return req.ip || req.socket?.remoteAddress || null;
 }
+
+router.get('/practice', (_req, res) => {
+  res.json(getPublicPractice());
+});
 
 router.get('/settings', (_req, res) => {
   const settings = getSettings();
   res.json({
     schedule_locked: !!settings.schedule_locked,
     session_duration_minutes: settings.session_duration_minutes,
+    online_available: Boolean(getOnlineMeetingLink()),
   });
 });
 
@@ -133,6 +137,7 @@ router.post('/appointments', bookingLimiter, async (req, res) => {
       INVALID_ATTENDANCE: [400, 'Selecione o tipo de atendimento: Online ou Presencial.'],
       INVALID_EMAIL: [400, 'Informe um e-mail válido.'],
       INVALID_PHONE: [400, 'Informe um telefone/WhatsApp válido com DDD.'],
+      ONLINE_UNAVAILABLE: [400, 'Atendimento online indisponível no momento. Escolha presencial.'],
       SLOT_UNAVAILABLE: [409, 'Horário indisponível. Escolha outro ou veja as sugestões abaixo.'],
       SLOT_TAKEN: [409, 'Este horário acabou de ser reservado. Escolha outro ou veja as sugestões abaixo.'],
     };
@@ -155,6 +160,46 @@ router.post('/appointments', bookingLimiter, async (req, res) => {
       ...(suggestions?.length ? { suggestions } : {}),
     });
   }
+});
+
+router.post('/contact', bookingLimiter, async (req, res) => {
+  const { nome, email, whatsapp, mensagem } = req.body || {};
+
+  if (!nome?.trim() || !email?.trim() || !whatsapp?.trim() || !mensagem?.trim()) {
+    return res.status(400).json({ error: 'Preencha todos os campos obrigatórios.' });
+  }
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: 'Informe um e-mail válido.' });
+  }
+  if (!isValidPhone(whatsapp)) {
+    return res.status(400).json({ error: 'Informe um WhatsApp válido com DDD.' });
+  }
+  if (mensagem.trim().length > 2000) {
+    return res.status(400).json({ error: 'Mensagem muito longa.' });
+  }
+
+  const to = process.env.NOTIFY_EMAIL || PRACTICE.email;
+  const result = await sendEmail({
+    to,
+    subject: `Mensagem do site — ${nome.trim().slice(0, 120)}`,
+    text: [
+      'Mensagem recebida pelo formulário do site:',
+      '',
+      `Nome: ${nome.trim()}`,
+      `E-mail: ${email.trim()}`,
+      `WhatsApp: ${whatsapp.trim()}`,
+      '',
+      mensagem.trim(),
+    ].join('\n'),
+  });
+
+  if (!result.sent) {
+    return res.status(503).json({
+      error: 'Não foi possível enviar agora. Fale pelo WhatsApp (11) 99278-9380.',
+    });
+  }
+
+  res.json({ message: 'Mensagem enviada. Retorno em até 24 horas.' });
 });
 
 router.post('/waiting-list', bookingLimiter, async (req, res) => {

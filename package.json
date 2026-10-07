@@ -3,11 +3,16 @@
   "version": "1.0.0",
   "description": "Site e sistema de agendamento — Renata Batista Psicologia & Arteterapia",
   "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "scripts": {
     "start": "node server/index.js",
+    "start:prod": "node server/setup.js && node server/index.js",
     "dev": "node --watch server/index.js",
     "setup": "node server/setup.js",
-    "reset-admin": "node server/setup.js"
+    "reset-admin": "node server/setup.js",
+    "backup": "node server/backup.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

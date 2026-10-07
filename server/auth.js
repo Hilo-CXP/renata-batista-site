@@ -1,7 +1,8 @@
 import './loadEnv.js';
 import jwt from 'jsonwebtoken';
+import { getJwtSecret } from './secrets.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+const JWT_SECRET = getJwtSecret();
 
 export function signToken(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });

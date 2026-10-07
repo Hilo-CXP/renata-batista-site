@@ -9,6 +9,7 @@ import adminRoutes from './routes/admin.js';
 import { verifyToken } from './auth.js';
 import { isEmailConfigured } from './services/emailService.js';
 import { isWhatsAppConfigured, isSmsConfigured } from './services/messagingService.js';
+import { isProduction } from './secrets.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
@@ -16,6 +17,10 @@ const adminDir = path.join(rootDir, 'admin');
 const PORT = process.env.PORT || 3000;
 
 const app = express();
+
+if (process.env.TRUST_PROXY === '1' || (isProduction() && process.env.TRUST_PROXY !== '0')) {
+  app.set('trust proxy', 1);
+}
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -34,10 +39,13 @@ app.use(helmet({
 app.use(express.json({ limit: '32kb' }));
 app.use(cookieParser());
 
+app.get('/healthz', (_req, res) => {
+  res.json({ ok: true });
+});
+
 app.use('/api/public', publicRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Rotas do admin ANTES do static — evita conflito com a pasta /admin
 app.get('/admin/login', (_req, res) => {
   res.sendFile(path.join(adminDir, 'login.html'));
 });
@@ -54,22 +62,37 @@ app.get('/admin', (req, res) => {
   }
 });
 
-app.use('/admin/css', express.static(path.join(adminDir, 'css')));
-app.use('/admin/js', express.static(path.join(adminDir, 'js')));
+app.use('/admin/css', express.static(path.join(adminDir, 'css'), { dotfiles: 'deny', index: false }));
+app.use('/admin/js', express.static(path.join(adminDir, 'js'), { dotfiles: 'deny', index: false }));
 
-// Static do site público (ignora /admin e /api)
-app.use((req, res, next) => {
-  if (req.path.startsWith('/admin') || req.path.startsWith('/api')) {
-    return next();
-  }
-  express.static(rootDir, { index: 'index.html' })(req, res, next);
+app.use('/css', express.static(path.join(rootDir, 'css'), { dotfiles: 'deny', index: false }));
+app.use('/js', express.static(path.join(rootDir, 'js'), { dotfiles: 'deny', index: false }));
+app.use('/imagens', express.static(path.join(rootDir, 'imagens'), { dotfiles: 'deny', index: false }));
+
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(rootDir, 'index.html'));
+});
+
+app.get('/index.html', (_req, res) => {
+  res.sendFile(path.join(rootDir, 'index.html'));
 });
 
 app.get('/robots.txt', (_req, res) => {
   res.type('text/plain').send('User-agent: *\nDisallow: /admin\nDisallow: /api/admin\n');
 });
 
-app.use((_req, res) => {
+app.use((req, res) => {
+  const blocked = req.path === '/package.json'
+    || req.path === '/package-lock.json'
+    || req.path.startsWith('/data')
+    || req.path.startsWith('/server')
+    || req.path.startsWith('/node_modules')
+    || req.path.startsWith('/.')
+    || req.path.endsWith('.bat')
+    || req.path.endsWith('.md');
+  if (blocked) {
+    return res.status(404).type('text/plain').send('Not found');
+  }
   res.status(404).sendFile(path.join(rootDir, 'index.html'));
 });
 

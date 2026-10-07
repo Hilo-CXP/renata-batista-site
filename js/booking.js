@@ -10,11 +10,12 @@
     date: '',
     slot: null,
     attendanceType: null,
+    onlineAvailable: false,
     patient: null,
   };
 
   const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  const OFFICE_ADDRESS = 'R. Dr. Aureliano Barreiros, 641 — Itaquera, São Paulo — SP, 08210-450';
+  let OFFICE_ADDRESS = 'R. Dr. Aureliano Barreiros, 641 — Itaquera, São Paulo — SP, 08210-450';
 
   async function api(path, options = {}) {
     const res = await fetch(`/api/public${path}`, {
@@ -169,8 +170,8 @@
         ${state.services.map((s) => `
           <button type="button" class="booking__service ${state.serviceId === s.id ? 'selected' : ''}" data-id="${s.id}">
             <div>
-              <strong>${s.name}</strong>
-              <span>${s.duration_minutes || 50} min</span>
+              <strong>${escapeHtml(s.name)}</strong>
+              <span>${escapeHtml(s.duration_minutes || 50)} min</span>
             </div>
           </button>
         `).join('')}
@@ -267,7 +268,7 @@
         render();
       });
     } catch (err) {
-      panel.innerHTML = `${renderSteps()}<div class="booking__message error">${err.message}</div>`;
+      panel.innerHTML = `${renderSteps()}<div class="booking__message error">${escapeHtml(err.message)}</div>`;
     }
   }
 
@@ -277,20 +278,21 @@
     panel.innerHTML = `
       ${renderSteps()}
       <div class="booking__summary">
-        <strong>${service?.name || 'Consulta'}</strong><br>
-        ${formatDateBR(state.date)} às ${state.slot}
+        <strong>${escapeHtml(service?.name || 'Consulta')}</strong><br>
+        ${formatDateBR(state.date)} às ${escapeHtml(state.slot)}
       </div>
       <form id="patientForm" novalidate>
         <fieldset class="booking__fieldset">
           <legend class="booking__label">Tipo de atendimento *</legend>
           <div class="booking__attendance" role="radiogroup" aria-label="Tipo de atendimento">
             <label class="booking__attendance-option">
-              <input type="radio" name="attendance_type" value="presencial" ${state.attendanceType === 'presencial' ? 'checked' : ''} required>
+              <input type="radio" name="attendance_type" value="presencial" ${state.attendanceType !== 'online' ? 'checked' : ''} required>
               <span>
                 <strong>Presencial</strong>
                 <small>No consultório em Itaquera</small>
               </span>
             </label>
+            ${state.onlineAvailable ? `
             <label class="booking__attendance-option">
               <input type="radio" name="attendance_type" value="online" ${state.attendanceType === 'online' ? 'checked' : ''}>
               <span>
@@ -298,6 +300,7 @@
                 <small>Por videochamada</small>
               </span>
             </label>
+            ` : ''}
           </div>
         </fieldset>
         <div class="booking__field">
@@ -543,11 +546,17 @@
 
   async function init() {
     try {
-      const [settings, services] = await Promise.all([
+      const [settings, services, practice] = await Promise.all([
         api('/settings'),
         api('/services'),
+        api('/practice').catch(() => null),
       ]);
       state.locked = settings.schedule_locked;
+      state.onlineAvailable = Boolean(settings.online_available);
+      if (practice?.address) OFFICE_ADDRESS = practice.address;
+      if (!state.onlineAvailable && state.attendanceType === 'online') {
+        state.attendanceType = 'presencial';
+      }
       state.services = services;
       if (state.services.length === 1) state.serviceId = state.services[0].id;
       loader?.remove();
