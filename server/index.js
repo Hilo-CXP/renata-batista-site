@@ -10,6 +10,7 @@ import { verifyToken } from './auth.js';
 import { isEmailConfigured } from './services/emailService.js';
 import { isWhatsAppConfigured, isSmsConfigured } from './services/messagingService.js';
 import { isProduction } from './secrets.js';
+import { syncAdminFromEnv } from './setup.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
@@ -96,7 +97,8 @@ app.use((req, res) => {
   res.status(404).sendFile(path.join(rootDir, 'index.html'));
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
+  syncAdminFromEnv({ required: false });
   console.log('');
   console.log('  Site:   http://localhost:' + PORT);
   console.log('  Admin:  http://localhost:' + PORT + '/admin/login');

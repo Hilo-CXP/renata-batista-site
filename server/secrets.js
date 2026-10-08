@@ -41,5 +41,4 @@ export function getAdminCredentials() {
 export function assertProductionEnv() {
   if (!isProduction()) return;
   getJwtSecret();
-  getAdminCredentials();
 }

@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim
+FROM node:24-bookworm-slim
 
 WORKDIR /app
 
@@ -12,4 +12,4 @@ ENV NODE_ENV=production
 ENV TRUST_PROXY=1
 EXPOSE 3000
 
-CMD ["sh", "-c", "node server/setup.js && node server/index.js"]
+CMD ["node", "server/index.js"]
