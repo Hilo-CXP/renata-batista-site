@@ -10,7 +10,6 @@
     date: '',
     slot: null,
     attendanceType: null,
-    onlineAvailable: false,
     patient: null,
   };
 
@@ -292,7 +291,6 @@
                 <small>No consultório em Itaquera</small>
               </span>
             </label>
-            ${state.onlineAvailable ? `
             <label class="booking__attendance-option">
               <input type="radio" name="attendance_type" value="online" ${state.attendanceType === 'online' ? 'checked' : ''}>
               <span>
@@ -300,7 +298,6 @@
                 <small>Por videochamada</small>
               </span>
             </label>
-            ` : ''}
           </div>
         </fieldset>
         <div class="booking__field">
@@ -552,11 +549,7 @@
         api('/practice').catch(() => null),
       ]);
       state.locked = settings.schedule_locked;
-      state.onlineAvailable = Boolean(settings.online_available);
       if (practice?.address) OFFICE_ADDRESS = practice.address;
-      if (!state.onlineAvailable && state.attendanceType === 'online') {
-        state.attendanceType = 'presencial';
-      }
       state.services = services;
       if (state.services.length === 1) state.serviceId = state.services[0].id;
       loader?.remove();

@@ -9,7 +9,7 @@ import {
 } from '../notifications.js';
 import { appointmentChanged } from '../events.js';
 import { sendEmail } from '../services/emailService.js';
-import { PRACTICE, getPublicPractice, getOnlineMeetingLink } from '../config/practice.js';
+import { PRACTICE, getPublicPractice } from '../config/practice.js';
 import { isValidEmail, isValidPhone } from '../utils.js';
 
 const router = Router();
@@ -33,7 +33,6 @@ router.get('/settings', (_req, res) => {
   res.json({
     schedule_locked: !!settings.schedule_locked,
     session_duration_minutes: settings.session_duration_minutes,
-    online_available: Boolean(getOnlineMeetingLink()),
   });
 });
 
@@ -137,7 +136,6 @@ router.post('/appointments', bookingLimiter, async (req, res) => {
       INVALID_ATTENDANCE: [400, 'Selecione o tipo de atendimento: Online ou Presencial.'],
       INVALID_EMAIL: [400, 'Informe um e-mail válido.'],
       INVALID_PHONE: [400, 'Informe um telefone/WhatsApp válido com DDD.'],
-      ONLINE_UNAVAILABLE: [400, 'Atendimento online indisponível no momento. Escolha presencial.'],
       SLOT_UNAVAILABLE: [409, 'Horário indisponível. Escolha outro ou veja as sugestões abaixo.'],
       SLOT_TAKEN: [409, 'Este horário acabou de ser reservado. Escolha outro ou veja as sugestões abaixo.'],
     };

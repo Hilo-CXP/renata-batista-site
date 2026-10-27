@@ -27,7 +27,6 @@ export function getPublicPractice() {
     email,
     address: PRACTICE.address,
     hours,
-    onlineAvailable: Boolean(getOnlineMeetingLink()),
     whatsappUrl: `https://wa.me/${PRACTICE.phoneE164}`,
   };
 }
