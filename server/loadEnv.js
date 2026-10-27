@@ -14,7 +14,9 @@ if (result.error) {
 for (const key of ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'NOTIFY_EMAIL', 'JWT_SECRET', 'ADMIN_PASSWORD']) {
   const value = process.env[key];
   if (typeof value === 'string') {
-    process.env[key] = value.trim().replace(/^['"]|['"]$/g, '');
+    let cleaned = value.trim().replace(/^['"]|['"]$/g, '');
+    if (key === 'SMTP_PASS') cleaned = cleaned.replace(/\s+/g, '');
+    process.env[key] = cleaned;
   }
 }
 

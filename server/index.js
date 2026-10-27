@@ -41,7 +41,11 @@ app.use(express.json({ limit: '32kb' }));
 app.use(cookieParser());
 
 app.get('/healthz', (_req, res) => {
-  res.json({ ok: true });
+  res.json({
+    ok: true,
+    email: isEmailConfigured(),
+    siteUrl: Boolean((process.env.SITE_URL || '').trim()),
+  });
 });
 
 app.use('/api/public', publicRoutes);
