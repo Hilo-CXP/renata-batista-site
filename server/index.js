@@ -44,7 +44,7 @@ app.get('/healthz', (_req, res) => {
   res.json({
     ok: true,
     email: isEmailConfigured(),
-    siteUrl: Boolean((process.env.SITE_URL || '').trim()),
+    siteUrl: Boolean((process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || '').trim()),
   });
 });
 

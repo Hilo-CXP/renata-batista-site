@@ -57,7 +57,7 @@ export function buildClientConfirmationEmail(appointment) {
   const whenDate = formatDateBR(appointment.date);
   const location = buildLocationBlock(appointment);
   const instructions = buildInstructions(appointment);
-  const siteUrl = (process.env.SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
+  const siteUrl = (process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000').replace(/\/$/, '');
   const name = escapeHtml(appointment.patient_name);
   const service = escapeHtml(appointment.service_name || 'Consulta');
   const typeLabel = attendanceLabel(appointment.attendance_type);
