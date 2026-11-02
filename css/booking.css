@@ -442,7 +442,7 @@
 
 @media (max-width: 768px) {
   .booking__panel {
-    padding: 24px 20px;
+    padding: 24px 84px 24px 20px;
   }
 
   .booking__actions {

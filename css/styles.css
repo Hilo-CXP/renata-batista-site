@@ -1242,7 +1242,7 @@ ul {
   .hero__actions {
     flex-direction: column;
     align-items: stretch;
-    padding-right: 56px;
+    padding-right: 72px;
   }
 
   .hero__actions .btn {
@@ -1286,6 +1286,10 @@ ul {
 
   .contact__form {
     padding: 28px 20px;
+  }
+
+  .contact__form .btn {
+    width: calc(100% - 64px);
   }
 
   .location__map {
